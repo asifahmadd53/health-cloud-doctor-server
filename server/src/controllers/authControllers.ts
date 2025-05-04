@@ -1,8 +1,8 @@
 import upload from "../config/multer-config";
-import { signUpSchema } from "../middleware/validator";
+import { loginSchema, signUpSchema } from "../middleware/validator";
 import doctors from "../models/doctors";
-import { doHash } from "../utils/hashing";
-
+import { doCompare, doHash } from "../utils/hashing";
+import jwt from "jsonwebtoken";
 
 export const signUp = [
   upload.single("pmdcCopy"),
@@ -49,28 +49,26 @@ export const signUp = [
 ];
 
 
-// export const login = async(req:any,res:any)=>{
-//     try{
-//         const {pmdcNumber,password} = req.body;
-//         const {error} = loginSchema.validate(req.body);
-//         if(error){
-//             return res.status(400).json({message:error.details[0].message})
-//         }
-//         const user = await doctors.findOne({pmdcNumber})
-//         if(!user){
-//             return res.status(400).json({message:"Invalid pmdc number or password"})
-//         }
-//         const passwordMatch = await doCompare(password,user.password)
-//         if(!passwordMatch){
-//             return res.status(400).json({message:"Invalid pmdc number or password"})
-//         }
-//         const token = jwt.sign({userId:user._id},process.env.JWT_SECRET as string,{expiresIn:"1h"})
-//         res.status(200).json({message:"Login successful",token})
+export const login = async(req:any,res:any)=>{
+    try{
+        const {pmdcNumber,password} = req.body;
+        const {error} = loginSchema.validate(req.body);
+        if(error){
+            return res.status(400).json({message:error.details[0].message})
+        }
+        const user = await doctors.findOne({pmdcNumber})
+        if(!user){
+            return res.status(400).json({message:"Invalid pmdc number or password"})
+        }
+        const passwordMatch = await doCompare(password,user.password)
+        if(!passwordMatch){
+            return res.status(400).json({message:"Invalid pmdc number or password"})
+        }
+        const token = jwt.sign({userId:user._id},process.env.JWT_SECRET as string,{expiresIn:"24h"})
+        res.status(200).json({message:"Login successful",token,user})
          
-//     }catch(err){
-//         res.status(500).json({message:"Internal server error"})
-//     }
-// }
+    }catch(err){
+        res.status(500).json({message:"Internal server error"})
+    }
+}
 
-
-console.log('HIIIIIIIIIIIIIIIIIIIIII')
