@@ -245,7 +245,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Helper function to generate random verification code
+
 const generateVerificationCode = (): string => {
   return Math.floor(1000 + Math.random() * 9000).toString();
 };
@@ -483,3 +483,15 @@ export const resetPassword = async (req:any, res:any) => {
     return res.status(500).json({ message: "Password reset failed" });
   }
 };
+
+export const logout = async (req:any, res:any) => {
+  try {
+    res.clearCookie('token');
+    res.status(200).json({ success: true, message: "Logged out successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
