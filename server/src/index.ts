@@ -5,6 +5,8 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes";
 import bodyParser from "body-parser";
 import connectDB from "./database/db";
+import staffRoutes from "./routes/staffRoutes";
+import appointmentRoutes from "./routes/appointmentRoutes";
 
 const app =  express()
 
@@ -15,6 +17,10 @@ app.use(express.urlencoded({extended:true}))
 app.use(bodyParser.json())
 
 app.use('/api/auth', authRoutes);
+app.use('/api/staff', staffRoutes);
+app.use('/api/appointment', appointmentRoutes);
+
+
 
 app.get("/", (req, res) => {
     res.send("Hello Worlddddddddd")

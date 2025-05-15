@@ -233,7 +233,6 @@
 //   }
 // };
 
-import { Request, Response } from "express";
 import crypto from "crypto";
 import doctors from "../models/doctors";
 import { doCompare, doHash } from "../utils/hashing";
