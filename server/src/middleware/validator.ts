@@ -88,32 +88,31 @@ export const staffLoginSchema = Joi.object({
   }),
 });
 
-export const appointmentSchema = Joi.object({
-  patientName: Joi.string().required().trim().messages({
-    "string.empty": "Patient Name is required",
-  }),
-  patientCNIC: Joi.string().required().trim().messages({
-    "string.empty": "Patient CNIC is required",
-  }),
-  patientPhone: Joi.string().required().trim().messages({
-    "string.empty": "Patient Phone is required",
-  }),
-  patientAge: Joi.number().required().messages({
-    "number.base": "Patient Age must be a number",
-    "number.empty": "Patient Age is required",
-  }),
-  gender: Joi.string().required().trim().messages({
-    "string.empty": "Gender is required",
-  }),
-  date: Joi.date().required().messages({
-    "date.base": "Date must be a valid date",
-    "date.empty": "Date is required",
-  }),
-  time: Joi.string().required().trim().messages({
-    "string.empty": "Time is required",
-  }),
-  paymentStatus: Joi.string().required().trim().messages({
-    "string.empty": "Payment status is required",
-  }),
-});
-
+// export const appointmentSchema = Joi.object({
+//   patientName: Joi.string().required().trim().messages({
+//     "string.empty": "Patient Name is required",
+//   }),
+//   patientCNIC: Joi.string().required().trim().messages({
+//     "string.empty": "Patient CNIC is required",
+//   }),
+//   patientPhone: Joi.string().required().trim().messages({
+//     "string.empty": "Patient Phone is required",
+//   }),
+//   patientAge: Joi.number().required().messages({
+//     "number.base": "Patient Age must be a number",
+//     "number.empty": "Patient Age is required",
+//   }),
+//   gender: Joi.string().required().trim().messages({
+//     "string.empty": "Gender is required",
+//   }),
+//   date: Joi.date().required().messages({
+//     "date.base": "Date must be a valid date",
+//     "date.empty": "Date is required",
+//   }),
+//   time: Joi.string().required().trim().messages({
+//     "string.empty": "Time is required",
+//   }),
+//   paymentStatus: Joi.string().required().trim().messages({
+//     "string.empty": "Payment status is required",
+//   }),
+// });

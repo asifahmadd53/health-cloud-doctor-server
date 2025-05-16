@@ -68,6 +68,7 @@ export const staffLogin = async (req: any, res: any) => {
         
         return res.status(200).json({ message: "Login successful", staff: existingStaff, token, success: true});
     } catch (error) {
+        console.error("Login Error:", error); // Add this
         return res.status(500).json({ message: "Internal Server Error" });
     }
 }
