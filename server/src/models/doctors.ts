@@ -46,6 +46,9 @@ const doctorSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  createdAt:{
+    type:Date,
+  }
 });
 
 export default mongoose.model("Doctor", doctorSchema);
