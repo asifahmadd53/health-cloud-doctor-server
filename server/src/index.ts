@@ -7,6 +7,9 @@ import bodyParser from "body-parser";
 import connectDB from "./database/db";
 import staffRoutes from "./routes/staffRoutes";
 import appointmentRoutes from "./routes/appointmentRoutes";
+import doctorsRoutes from './routes/doctorsRoutes'
+
+
 
 const app =  express()
 
@@ -19,7 +22,7 @@ app.use(bodyParser.json())
 app.use('/api/auth', authRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/appointment', appointmentRoutes);
-
+app.use('/api/doctors', doctorsRoutes)
 
 
 app.get("/", (req, res) => {
