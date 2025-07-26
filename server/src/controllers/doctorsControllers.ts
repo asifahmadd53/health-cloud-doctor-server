@@ -6,7 +6,7 @@ export const getDoctors = async (req:any, res:any) => {
     return res.status(200).json({
       success: true,
       message: "Doctors retrieved successfully.",
-      data: doctorsList,
+      doctors: doctorsList,
     });
 
   } catch (err: any) {
