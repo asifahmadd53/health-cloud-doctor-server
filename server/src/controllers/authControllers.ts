@@ -233,7 +233,6 @@
 //   }
 // };
 
-import crypto from "crypto";
 import doctors from "../models/doctors";
 import { doCompare, doHash } from "../utils/hashing";
 import jwt from "jsonwebtoken";
