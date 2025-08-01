@@ -8,6 +8,7 @@ import connectDB from "./database/db";
 import staffRoutes from "./routes/staffRoutes";
 import appointmentRoutes from "./routes/appointmentRoutes";
 import doctorsRoutes from './routes/doctorsRoutes'
+import helmet from "helmet";
 
 
 
@@ -18,6 +19,8 @@ app.use(cors({credentials: true}))
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 app.use(bodyParser.json())
+app.use(helmet());
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/staff', staffRoutes);

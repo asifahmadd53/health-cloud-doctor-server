@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-export const signUpSchema = Joi.object({
+export const doctorProfileSchema = Joi.object({
   name: Joi.string().required().trim().messages({
     "string.empty": "Name is required",
   }),

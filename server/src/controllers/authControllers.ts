@@ -236,7 +236,7 @@
 import doctors from "../models/doctors";
 import { doCompare, doHash } from "../utils/hashing";
 import jwt from "jsonwebtoken";
-import { loginSchema, signUpSchema, emailSchema, verificationSchema, resetPasswordSchema } from "../middleware/validator";
+import { loginSchema, doctorProfileSchema, emailSchema, verificationSchema, resetPasswordSchema } from "../middleware/validator";
 import transport from "../middleware/sendMail";
 import upload from "../config/multer-config";
 import dotenv from "dotenv";
@@ -250,11 +250,11 @@ const generateVerificationCode = (): string => {
 
 export const signUp = [
   upload.single("pmdcCopy"),
-  async (req:any, res:any) => {
+  async (req: any, res: any) => {
     try {
       const { name, pmdcNumber, email, phoneNumber, password } = req.body;
 
-      const { error } = signUpSchema.validate(req.body);
+      const { error } = doctorProfileSchema.validate(req.body);
       if (error) {
         return res.status(400).json({ message: error.details[0].message });
       }
@@ -263,11 +263,12 @@ export const signUp = [
       if (existingUser) {
         return res.status(400).json({ message: "User already exists" });
       }
-
+      
       const file = req.file;
       if (!file || !file.buffer) {
         return res.status(400).json({ message: "PMDC image is required!" });
       }
+
 
       const imageBase64 = file.buffer.toString("base64");
       const imageMimeType = file.mimetype;
@@ -292,30 +293,30 @@ export const signUp = [
   },
 ];
 
-export const login = async (req:any, res:any) => {
+export const login = async (req: any, res: any) => {
   try {
     const { pmdcNumber, password } = req.body;
     const { error } = loginSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
-    
+
     const user = await doctors.findOne({ pmdcNumber });
     if (!user) {
       return res.status(400).json({ message: "Invalid PMDC number or password" });
     }
-    
+
     const passwordMatch = await doCompare(password, user.password);
     if (!passwordMatch) {
       return res.status(400).json({ message: "Invalid PMDC number or password" });
     }
-    
+
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET as string,
       { expiresIn: "24h" }
     );
-    
+
     res.status(200).json({
       success: true,
       message: "Login successful",
@@ -327,34 +328,34 @@ export const login = async (req:any, res:any) => {
   }
 };
 
-export const sendVerificationEmail = async (req:any, res:any) => {
+export const sendVerificationEmail = async (req: any, res: any) => {
   try {
     const { email } = req.body;
-    
+
     // Validate email
     const { error } = emailSchema.validate({ email });
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
-    
+
     // Find user by email
     const user = await doctors.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found with this email" });
     }
-    
+
     // Generate verification code
     const verificationCode = generateVerificationCode();
-    
+
     // Set expiration time (15 minutes from now)
     const verificationCodeExpires = new Date();
     verificationCodeExpires.setMinutes(verificationCodeExpires.getMinutes() + 15);
-    
+
     // Update user with verification code
     user.verificationCode = verificationCode;
     user.verificationCodeExpires = verificationCodeExpires;
     await user.save();
-    
+
     // Send email with verification code
     const mailOptions = {
       from: process.env.EMAIL_FROM || 'noreply@healthcloud.com',
@@ -374,115 +375,115 @@ export const sendVerificationEmail = async (req:any, res:any) => {
         </div>
       `
     };
-    
+
     await transport.sendMail(mailOptions);
-    
-    return res.status(200).json({ 
-      success: true, 
-      message: "Verification code sent to your email" 
+
+    return res.status(200).json({
+      success: true,
+      message: "Verification code sent to your email"
     });
-    
+
   } catch (err: any) {
     console.error("Send verification code error:", err.message);
     return res.status(500).json({ message: "Failed to send verification code" });
   }
 };
 
-export const verifyEmail = async (req:any, res:any) => {
+export const verifyEmail = async (req: any, res: any) => {
   try {
     const { email, verificationCode } = req.body;
-    
+
     // Validate request
     const { error } = verificationSchema.validate({ email, verificationCode });
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
-    
+
     // Find user by email
-    const user = await doctors.findOne({ 
+    const user = await doctors.findOne({
       email,
       verificationCode,
       verificationCodeExpires: { $gt: new Date() } // Check if code hasn't expired
     });
-    
+
     if (!user) {
       return res.status(400).json({ message: "Invalid or expired verification code" });
     }
-    
+
     // Generate a reset token that will be used for the password reset
     const resetToken = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET as string,
       { expiresIn: "15m" }
     );
-    
+
     // Clear verification code after successful verification
     user.verificationCode = "";
     user.verificationCodeExpires = new Date();
     await user.save();
-    
-    return res.status(200).json({ 
-      success: true, 
+
+    return res.status(200).json({
+      success: true,
       message: "Verification successful",
       resetToken
     });
-    
+
   } catch (err: any) {
     console.error("Verify code error:", err.message);
     return res.status(500).json({ message: "Verification failed" });
   }
 };
 
-export const resetPassword = async (req:any, res:any) => {
+export const resetPassword = async (req: any, res: any) => {
   try {
     const { newPassword } = req.body;
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ message: "Authorization token required" });
     }
-    
+
     const token = authHeader.split(' ')[1];
-    
+
     // Validate password
     const { error } = resetPasswordSchema.validate({ newPassword });
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
-    
+
     try {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
-      
+
       // Find user by ID
       const user = await doctors.findById(decoded.userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       // Hash new password
       const hashedPassword = await doHash(newPassword, 12);
-      
+
       // Update password
       user.password = hashedPassword;
       await user.save();
-      
-      return res.status(200).json({ 
-        success: true, 
-        message: "Password reset successful" 
+
+      return res.status(200).json({
+        success: true,
+        message: "Password reset successful"
       });
-      
+
     } catch (err) {
       return res.status(401).json({ message: "Invalid or expired token" });
     }
-    
+
   } catch (err: any) {
     console.error("Reset password error:", err.message);
     return res.status(500).json({ message: "Password reset failed" });
   }
 };
 
-export const logout = async (req:any, res:any) => {
+export const logout = async (req: any, res: any) => {
   try {
     res.clearCookie('token');
     res.status(200).json({ success: true, message: "Logged out successfully" });
