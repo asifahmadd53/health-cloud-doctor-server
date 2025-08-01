@@ -1,3 +1,4 @@
+import upload from "../config/multer-config";
 import doctors from "../models/doctors";
 
 export const getDoctors = async (req: any, res: any) => {
@@ -129,3 +130,41 @@ export const updateDoctorGender = async(req:any,res:any)=>{
     })
   }
 }
+
+export const UpdateDoctorProfile = [
+upload.single("profileImage"),
+   async(req:any, res:any)=>{
+  try{
+    const {id} = req.params;
+    const {name, email, phoneNumber, specialty, years, certifications, professionalBio, clinicAddress} = req.body;
+    const file = req.file
+    if(!file || !file.buffer){
+      return res.status(400).json({success: false, message: "Please upload a valid"})
+    }
+    const imageBase64 = file.buffer.toString("base64");
+      const imageMimeType = file.mimetype;
+      const imageSrc = `data:${imageMimeType};base64,${imageBase64}`;
+
+    const updatedDoctor =  await doctors.findByIdAndUpdate(id,{
+      name, profileImage:imageSrc, email, phoneNumber, specialty, years, certifications, professionalBio, clinicAddress
+    },
+    {new: true})
+
+    if(updatedDoctor){
+      return res.status(200).json({
+        success: true,
+        message: "Doctor profile updated successfully",
+        doctor: updatedDoctor
+        })
+    }
+    if(!updatedDoctor){
+      return res.status(404).json({success: false, message: "Doctor not found"})
+    }
+  }catch(err:any){
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: err.message,
+    })
+  }
+}]

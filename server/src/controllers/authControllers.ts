@@ -282,7 +282,7 @@ export const signUp = [
         email,
         phoneNumber,
         password: hashedPassword,
-        pmdcCopy: imageSrc,
+        pmdcCopy: imageSrc
       });
 
       return res.status(201).json({ success: true, message: "User created successfully", user: newUser });

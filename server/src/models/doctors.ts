@@ -1,12 +1,15 @@
 import mongoose from "mongoose";
 
 const doctorSchema = new mongoose.Schema({
-  // Sign Up Fields
 
   name: {
     type: String,
     required: true,
     trim: true,
+  },
+  profileImage:{
+      type:String,
+      required:false
   },
   pmdcNumber: {
     type: String,
@@ -41,10 +44,10 @@ const doctorSchema = new mongoose.Schema({
     trim: true,
   },
   years: {
-    type: Number,
+    type: String,
     required: false,
   },
-  certification: {
+  certifications: {
     type: String,
     required: false,
   },
