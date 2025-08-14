@@ -8,6 +8,7 @@ import connectDB from "./database/db";
 import staffRoutes from "./routes/staffRoutes";
 import appointmentRoutes from "./routes/appointmentRoutes";
 import doctorsRoutes from './routes/doctorsRoutes'
+import adddrugModeRoutes from './routes/drugModeRoutes'
 import helmet from "helmet";
 
 
@@ -26,6 +27,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/appointment', appointmentRoutes);
 app.use('/api/doctors', doctorsRoutes)
+app.use('/api/drugmode', adddrugModeRoutes)
 
 
 app.get("/", (req, res) => {

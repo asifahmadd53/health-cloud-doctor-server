@@ -44,7 +44,6 @@ export const createAppointment = async (req: any, res: any) => {
     }
   };
 
-
 export const getAppointments = async(req:any, res:any)=>{
   try{
     const appointments = await Appointment.find().populate('staffId')
