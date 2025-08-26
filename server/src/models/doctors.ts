@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 
-const doctorSchema = new mongoose.Schema({
-
+const doctorAuthSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -38,28 +37,27 @@ const doctorSchema = new mongoose.Schema({
     required: true,
   },
   // 🔄 Profile setup fields (optional at signup)
-  specialty: {
-    type: String,
-    required: false,
-    trim: true,
-  },
-  years: {
-    type: String,
-    required: false,
-  },
-  certifications: {
-    type: String,
-    required: false,
-  },
-  professionalBio: {
-    type: String,
-    required: false,
-  },
-  clinicAddress: {
-    type: String,
-    required: false,
-  },
-  // ✅ Extra meta
+  // specialty: {
+  //   type: String,
+  //   required: false,
+  //   trim: true,
+  // },
+  // years: {
+  //   type: String,
+  //   required: false,
+  // },
+  // certifications: {
+  //   type: String,
+  //   required: false,
+  // },
+  // professionalBio: {
+  //   type: String,
+  //   required: false,
+  // },
+  // clinicAddress: {
+  //   type: String,
+  //   required: false,
+  // },
   isApproved: {
     type: Boolean,
     default: false,
@@ -82,4 +80,6 @@ const doctorSchema = new mongoose.Schema({
   },
 });
 
-export default mongoose.model("Doctor", doctorSchema);
+const doctorAuth =  mongoose.model("DoctorAuth", doctorAuthSchema);
+
+export default doctorAuth

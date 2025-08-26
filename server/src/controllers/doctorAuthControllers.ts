@@ -233,13 +233,14 @@
 //   }
 // };
 
-import doctors from "../models/doctors";
+import doctorAuth from "../models/doctors";
 import { doCompare, doHash } from "../utils/hashing";
 import jwt from "jsonwebtoken";
 import { loginSchema, doctorProfileSchema, emailSchema, verificationSchema, resetPasswordSchema } from "../middleware/validator";
 import transport from "../middleware/sendMail";
 import upload from "../config/multer-config";
 import dotenv from "dotenv";
+
 
 dotenv.config();
 
@@ -259,7 +260,7 @@ export const signUp = [
         return res.status(400).json({ message: error.details[0].message });
       }
 
-      const existingUser = await doctors.findOne({ $or: [{ pmdcNumber }, { email }] });
+      const existingUser = await doctorAuth.findOne({ $or: [{ pmdcNumber }, { email }] });
       if (existingUser) {
         return res.status(400).json({ message: "User already exists" });
       }
@@ -276,7 +277,7 @@ export const signUp = [
 
       const hashedPassword = await doHash(password, 12);
 
-      const newUser = await doctors.create({
+      const newUser = await doctorAuth.create({
         name,
         pmdcNumber,
         email,
@@ -284,6 +285,65 @@ export const signUp = [
         password: hashedPassword,
         pmdcCopy: imageSrc
       });
+
+       const mailOptions = {
+  from: process.env.EMAIL_FROM || 'noreply@healthcloud.com',
+  to: email,
+  subject: 'Welcome to Health Cloud – Account Pending Approval',
+  html: `
+    <div style="background-color: #f9fafb; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        
+        <!-- Header -->
+        <div style="background-color: #0891b2; padding: 24px; text-align: center;">
+          <!-- Optional logo -->
+          <!-- <img src="https://yourdomain.com/logo.png" alt="Health Cloud Logo" style="max-height: 60px; margin-bottom: 10px;" /> -->
+          <h1 style="color: #ffffff; font-size: 24px; margin: 0;">Welcome to Health Cloud</h1>
+        </div>
+        
+        <!-- Body -->
+        <div style="padding: 30px;">
+          <p style="font-size: 16px; color: #333333; margin-bottom: 20px;">Dear Doctor,</p>
+
+          <p style="font-size: 16px; color: #333333; margin-bottom: 15px;">
+            Thank you for signing up with <strong>Health Cloud</strong> — your trusted digital partner for streamlining your medical practice and enhancing patient relationships.
+          </p>
+
+          <p style="font-size: 16px; color: #333333; margin-bottom: 15px;">
+            Your registration has been successfully received and is currently under review by our administrative team.
+          </p>
+
+          <div style="background-color: #e0f7fa; padding: 16px 20px; border-left: 5px solid #0891b2; margin: 20px 0; border-radius: 6px;">
+            <p style="margin: 0; font-size: 15px; color: #0f172a;">
+              <strong>Please wait while we verify your account details.</strong> You’ll receive an email confirmation once your profile is approved.
+            </p>
+          </div>
+
+          <p style="font-size: 15px; color: #4b5563; margin-bottom: 20px;">
+            This process typically takes a short amount of time. We appreciate your patience and look forward to welcoming you to our network of certified professionals.
+          </p>
+
+          <p style="font-size: 15px; color: #4b5563; margin-bottom: 10px;">
+            If you have any questions, feel free to contact our support team at
+            <a href="mailto:support@healthcloud.com" style="color: #0891b2; text-decoration: none;">support@healthcloud.com</a>.
+          </p>
+
+          <p style="font-size: 15px; color: #4b5563;">
+            Best regards,<br>
+            <strong>The Health Cloud Team</strong>
+          </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8;">
+          &copy; ${new Date().getFullYear()} Health Cloud. All rights reserved.
+        </div>
+      </div>
+    </div>
+  `
+};
+
+    await transport.sendMail(mailOptions);
 
       return res.status(201).json({ success: true, message: "User created successfully", user: newUser });
     } catch (err: any) {
@@ -301,7 +361,7 @@ export const login = async (req: any, res: any) => {
       return res.status(400).json({ message: error.details[0].message });
     }
 
-    const user = await doctors.findOne({ pmdcNumber });
+    const user = await doctorAuth.findOne({ pmdcNumber });
     if (!user) {
       return res.status(400).json({ message: "Invalid PMDC number or password" });
     }
@@ -309,6 +369,13 @@ export const login = async (req: any, res: any) => {
     const passwordMatch = await doCompare(password, user.password);
     if (!passwordMatch) {
       return res.status(400).json({ message: "Invalid PMDC number or password" });
+    }
+    
+    if (!user.isApproved) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is not yet approved",
+      });
     }
 
     const token = jwt.sign(
@@ -332,14 +399,13 @@ export const sendVerificationEmail = async (req: any, res: any) => {
   try {
     const { email } = req.body;
 
-    // Validate email
     const { error } = emailSchema.validate({ email });
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
 
     // Find user by email
-    const user = await doctors.findOne({ email });
+    const user = await doctorAuth.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found with this email" });
     }
@@ -356,25 +422,54 @@ export const sendVerificationEmail = async (req: any, res: any) => {
     user.verificationCodeExpires = verificationCodeExpires;
     await user.save();
 
-    // Send email with verification code
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || 'noreply@healthcloud.com',
-      to: email,
-      subject: 'Password Reset Verification Code',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-          <h2 style="color: #0891b2; text-align: center;">Health Cloud Password Reset</h2>
-          <p>Hello,</p>
-          <p>You requested to reset your password. Please use the following verification code to continue:</p>
-          <div style="background-color: #f5f5f5; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+   const mailOptions = {
+  from: process.env.EMAIL_FROM || 'noreply@healthcloud.com',
+  to: email,
+  subject: 'Password Reset Request – Health Cloud',
+  html: `
+    <div style="background-color: #f9fafb; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        
+        <!-- Header -->
+        <div style="background-color: #0891b2; padding: 24px; text-align: center;">
+          <h1 style="color: #ffffff; font-size: 24px; margin: 0;">Reset Your Password</h1>
+        </div>
+        
+        <!-- Body -->
+        <div style="padding: 30px;">
+          <p style="font-size: 16px; color: #333333; margin-bottom: 20px;">Hello,</p>
+
+          <p style="font-size: 16px; color: #333333; margin-bottom: 15px;">
+            We received a request to reset your password for your <strong>Health Cloud</strong> account.
+          </p>
+
+          <p style="font-size: 16px; color: #333333; margin-bottom: 15px;">
+            Please use the following verification code to proceed:
+          </p>
+
+          <div style="background-color: #e0f7fa; padding: 16px 20px; text-align: center; font-size: 28px; font-weight: bold; letter-spacing: 6px; color: #0f172a; border-radius: 6px; margin: 20px 0;">
             ${verificationCode}
           </div>
-          <p>This code will expire in 15 minutes.</p>
-          <p>If you didn't request this, please ignore this email or contact support if you have concerns.</p>
-          <p>Thank you,<br>Health Cloud Team</p>
+
+          <p style="font-size: 15px; color: #4b5563; margin-bottom: 20px;">
+            This code will expire in <strong>15 minutes</strong>. If you did not request a password reset, please ignore this email or contact support if you have concerns.
+          </p>
+
+          <p style="font-size: 15px; color: #4b5563;">
+            Thank you,<br>
+            <strong>The Health Cloud Team</strong>
+          </p>
         </div>
-      `
-    };
+
+        <!-- Footer -->
+        <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8;">
+          &copy; ${new Date().getFullYear()} Health Cloud. All rights reserved.
+        </div>
+      </div>
+    </div>
+  `
+};
+
 
     await transport.sendMail(mailOptions);
 
@@ -400,7 +495,7 @@ export const verifyEmail = async (req: any, res: any) => {
     }
 
     // Find user by email
-    const user = await doctors.findOne({
+    const user = await doctorAuth.findOne({
       email,
       verificationCode,
       verificationCodeExpires: { $gt: new Date() } // Check if code hasn't expired
@@ -456,7 +551,7 @@ export const resetPassword = async (req: any, res: any) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
 
       // Find user by ID
-      const user = await doctors.findById(decoded.userId);
+      const user = await doctorAuth.findById(decoded.userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }

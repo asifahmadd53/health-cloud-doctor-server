@@ -5,7 +5,7 @@ import {
   sendVerificationEmail, 
   signUp, 
   verifyEmail 
-} from "../controllers/authControllers";
+} from "../controllers/doctorAuthControllers";
 
 const router = Router();
 
