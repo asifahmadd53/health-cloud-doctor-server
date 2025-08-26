@@ -9,6 +9,8 @@ import staffRoutes from "./routes/staffRoutes";
 import appointmentRoutes from "./routes/appointmentRoutes";
 import doctorsRoutes from './routes/doctorsRoutes'
 import adddrugModeRoutes from './routes/drugModeRoutes'
+import drugTypesRoutes from './routes/drugTypeRoutes'
+import drugRoutes from './routes/drugRoutes'
 import helmet from "helmet";
 
 
@@ -16,6 +18,7 @@ import helmet from "helmet";
 const app =  express()
 
 app.use(cors({credentials: true}))
+
 
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
@@ -28,6 +31,8 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/appointment', appointmentRoutes);
 app.use('/api/doctors', doctorsRoutes)
 app.use('/api/drugmode', adddrugModeRoutes)
+app.use('/api/drugtype', drugTypesRoutes)
+app.use('/api/drugs', drugRoutes)
 
 
 app.get("/", (req, res) => {
