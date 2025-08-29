@@ -257,12 +257,12 @@ export const signUp = [
 
       const { error } = doctorProfileSchema.validate(req.body);
       if (error) {
-        return res.status(400).json({ message: error.details[0].message });
+        return res.status(422).json({ message: error.details[0].message });
       }
 
       const existingUser = await doctorAuth.findOne({ $or: [{ pmdcNumber }, { email }] });
       if (existingUser) {
-        return res.status(400).json({ message: "User already exists" });
+        return res.status(409).json({ message: "User already exists" });
       }
       
       const file = req.file;
@@ -370,7 +370,7 @@ export const login = async (req: any, res: any) => {
     if (!passwordMatch) {
       return res.status(400).json({ message: "Invalid PMDC number or password" });
     }
-    
+
     if (!user.isApproved) {
       return res.status(403).json({
         success: false,

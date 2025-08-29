@@ -36,28 +36,6 @@ const doctorAuthSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  // 🔄 Profile setup fields (optional at signup)
-  // specialty: {
-  //   type: String,
-  //   required: false,
-  //   trim: true,
-  // },
-  // years: {
-  //   type: String,
-  //   required: false,
-  // },
-  // certifications: {
-  //   type: String,
-  //   required: false,
-  // },
-  // professionalBio: {
-  //   type: String,
-  //   required: false,
-  // },
-  // clinicAddress: {
-  //   type: String,
-  //   required: false,
-  // },
   isApproved: {
     type: Boolean,
     default: false,
