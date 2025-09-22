@@ -67,17 +67,16 @@ export const addStaffSchema = Joi.object({
   }),
   email: Joi.string().email().required().trim().messages({
     "string.email": "Please provide a valid email",
+    "string.empty": "Email is required",
   }),
   phone: Joi.string().required().trim().messages({
     "string.empty": "Phone is required",
   }),
-  address: Joi.string().required().trim().messages({
-    "string.empty": "Address is required",
-  }),
-  bio: Joi.string().required().trim().messages({
-    "string.empty": "Bio is required",
-  }),
+  address: Joi.string().trim().optional().allow(null, ""), 
+  bio: Joi.string().trim().optional().allow(null, ""),     
+  profileImage: Joi.string().optional().allow(null, ""),  
 });
+
 
 export const staffLoginSchema = Joi.object({
   email: Joi.string().email().required().trim().messages({

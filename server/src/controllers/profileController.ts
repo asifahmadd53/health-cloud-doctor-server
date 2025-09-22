@@ -7,7 +7,9 @@ export const updateDoctorProfile = [
   upload.single("profileImage"),
   async (req: any, res: any) => {
     try {
-      const { id } = req.params;
+      
+    const doctorId = req.user.id
+
       const {
         name,
         email,
@@ -21,7 +23,7 @@ export const updateDoctorProfile = [
       const file = req.file;
 
       const updatedAuth = await doctorAuth.findByIdAndUpdate(
-        id,
+        doctorId,
         { name, email, phoneNumber },
         { new: true }
       );
@@ -45,7 +47,7 @@ export const updateDoctorProfile = [
       }
 
       const updatedProfile = await doctorProfile.findOneAndUpdate(
-        { doctor: id },
+        { doctor: doctorId },
         profileData,
         { new: true, upsert: true }
       );
@@ -64,14 +66,16 @@ export const updateDoctorProfile = [
 
 export const createSchedule = async (req: any, res: any) => {
   try {
-    const { doctor, schedules } = req.body;
 
-    const doctorProfileDoc = await doctorProfile.findOne({ doctor });
-    if (!doctorProfileDoc) {
-      return res.status(404).json({ message: "Doctor not found" });
+    const doctorAuthId = req.user?.id;
+    const { schedules } = req.body;
+
+     const profile = await doctorProfile.findOne({ doctor: doctorAuthId });
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Doctor profile not found" });
     }
-    
-    
+
+
     for (let day of schedules) {
       if (day.startTime && day.endTime && day.startTime >= day.endTime) {
         return res.status(400).json({
@@ -95,13 +99,13 @@ export const createSchedule = async (req: any, res: any) => {
       }
     }
 
-    let doctorSchedule = await ClinicSchedule.findOne({ doctor });
+    let doctorSchedule = await ClinicSchedule.findOne({ doctor: profile._id });
     if (doctorSchedule) {
-      doctorSchedule.weeklySchedule = schedules; // update array
+      doctorSchedule.weeklySchedule = schedules;
       await doctorSchedule.save();
     } else {
       doctorSchedule = await ClinicSchedule.create({
-        doctor,
+        doctor: profile._id,
         weeklySchedule: schedules
       });
     }
@@ -120,13 +124,16 @@ export const createSchedule = async (req: any, res: any) => {
   }
 };
 
-
 export const getSchedule = async (req: any, res: any) => {
   try {
-    const { doctorId } = req.params;
+    const doctorAuthId = req.user?.id
 
-    // Find the schedule for this doctor
-    const schedule = await ClinicSchedule.findOne({ doctor: doctorId });
+    const doctorProfileDoc = await doctorProfile.findOne({ doctor: doctorAuthId });
+    if (!doctorProfileDoc) {
+      return res.status(404).json({ success: false, message: "Doctor profile not found" });
+    }
+
+    const schedule = await ClinicSchedule.findOne({ doctor: doctorProfileDoc._id });
 
     if (!schedule) {
       return res.status(404).json({ success: false, message: "Schedule not found" });
@@ -134,7 +141,7 @@ export const getSchedule = async (req: any, res: any) => {
 
     res.status(200).json({
       success: true,
-      schedule, // contains weeklySchedule array
+      schedule, 
     });
   } catch (error: any) {
     res.status(500).json({

@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 
 const staffSchema = new mongoose.Schema({
+  doctor:{
+    type : mongoose.Schema.Types.ObjectId,
+    ref:"doctorAuth",
+    required:true,
+  },
   name: {
     type: String,
     required: true,
@@ -28,18 +33,17 @@ const staffSchema = new mongoose.Schema({
   },
   address: {
     type: String,
-    required: true,
+    default:null,
     trim: true,
   },
   bio: {
     type: String,
-    required: true,
+    default:null,
     trim: true,
   },
   profileImage: {
     type: String,
-    required: true,
-    trim: true,
+    default:null,
   },
 
 });

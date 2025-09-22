@@ -4,7 +4,13 @@ const appointmentSchema = new mongoose.Schema({
     staffId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Staff",
-        required: true
+       required: false,
+       default: undefined
+    },
+    doctor:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'doctorAuth',
+        required:true,
     },
     patientName: {
         type: String,
@@ -28,11 +34,11 @@ const appointmentSchema = new mongoose.Schema({
     },
     date: {
         type: Date,
-        required: true
+        default:null,
     },
     time: {
         type: String,
-        required: true
+        default:null
     },
     paymentStatus: {
         type: String,

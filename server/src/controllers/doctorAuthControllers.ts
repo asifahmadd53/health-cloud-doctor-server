@@ -286,7 +286,7 @@ export const signUp = [
         pmdcCopy: imageSrc
       });
 
-       const mailOptions = {
+      const mailOptions = {
   from: process.env.EMAIL_FROM || 'noreply@healthcloud.com',
   to: email,
   subject: 'Welcome to Health Cloud – Account Pending Approval',
@@ -343,9 +343,11 @@ export const signUp = [
   `
 };
 
-    await transport.sendMail(mailOptions);
+      await transport.sendMail(mailOptions);
 
-      return res.status(201).json({ success: true, message: "User created successfully", user: newUser });
+      const { password: _, pmdcCopy: __, ...safeUser } = newUser.toObject();
+
+      return res.status(201).json({ success: true, message: "User created successfully", user: safeUser });
     } catch (err: any) {
       console.error("Signup error:", err.message);
       return res.status(500).json({ message: "Internal Server Error" });
@@ -378,12 +380,11 @@ export const login = async (req: any, res: any) => {
       });
     }
 
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET as string,
+    const token = jwt.sign({ id: user._id },process.env.JWT_SECRET as string,
       { expiresIn: "24h" }
     );
-
+    
+    const {password: _, pmdcCopy:__, ...safeUser } = user.toObject()
     res.status(200).json({
       success: true,
       message: "Login successful",

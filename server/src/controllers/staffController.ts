@@ -7,30 +7,32 @@ import jwt from "jsonwebtoken";
 
 export const addStaff = [upload.single("profileImage"), async (req: any, res: any) => {
     try {
+        const doctorId = req.user?.id;
+        if (!doctorId) {
+        return res.status(401).json({ message: "Unauthorized: Doctor not found in token" });
+        }
         const { name, role, email, password, phone, address, bio } = req.body;
   
         const { error } = addStaffSchema.validate(req.body);
         if (error) {
           return res.status(400).json({ message: error.details[0].message });
         }
-  
         const existingUser = await staff.findOne({ $or: [{ email }] });
         if (existingUser) {
           return res.status(400).json({ message: "Staff already exists" });
         }
   
-        const file = req.file;
-        if (!file || !file.buffer) {
-          return res.status(400).json({ message: "Profile image is required!" });
-        }
-  
-        const imageBase64 = file.buffer.toString("base64");
-        const imageMimeType = file.mimetype;
-        const imageSrc = `data:${imageMimeType};base64,${imageBase64}`;
-  
+        let imageSrc: string | null = null;
+      if (req.file && req.file.buffer) {
+        const imageBase64 = req.file.buffer.toString("base64");
+        const imageMimeType = req.file.mimetype;
+        imageSrc = `data:${imageMimeType};base64,${imageBase64}`;
+      }
+
         const hashedPassword = await doHash(password, 12);
   
         const newUser = await staff.create({
+          doctor: doctorId,
           name,
           role,
           email,
@@ -75,11 +77,20 @@ export const staffLogin = async (req: any, res: any) => {
 
 export const getStaff = async (req: any, res: any) => {
     try {
-        const foundStaff = await staff.find();
-        if (!foundStaff) {
-            return res.status(400).json({ message: "No staff found" });
-        }
-        return res.status(200).json({ message: "Staff fetched successfully", staff: foundStaff, success: true});
+        const doctorId = req.user?.id
+        
+         if (!doctorId) {
+      return res.status(401).json({ message: "Unauthorized: Doctor not found" });
+    }
+        const foundStaff = await staff.find({doctor: doctorId });
+          if (!foundStaff || foundStaff.length === 0) {
+      return res.status(404).json({ message: "No staff found for this doctor" });
+    }
+         return res.status(200).json({
+      message: "Staff fetched successfully",
+      staff: foundStaff,
+      success: true,
+    });
     } catch (error) {
         return res.status(500).json({ message: "Internal Server Error" });
     }
@@ -111,11 +122,11 @@ export const deleteStaff = async (req: any, res: any) => {
     }
 }
 
-export const updateStaff = async (req: any, res: any) => {
+export const updateStaff = [upload.single("profileImage"), async (req: any, res: any) => {
     try {
         const { id } = req.params;
-        const { name, role, email, phone, address, bio, password, profileImage } = req.body;
-        const updatedStaff = await staff.findByIdAndUpdate(id, { name, role, email, phone, address, bio, password, profileImage }, { new: true });
+        const { name, role, email, phone, address, bio, profileImage } = req.body;
+        const updatedStaff = await staff.findByIdAndUpdate(id, { name, role, email, phone, address, bio, profileImage }, { new: true });
         if (!updatedStaff) {
             return res.status(400).json({ message: "Staff not found" });
         }
@@ -123,4 +134,4 @@ export const updateStaff = async (req: any, res: any) => {
     } catch (error) {
         return res.status(500).json({ message: "Internal Server Error" });
     }
-}
+}]
