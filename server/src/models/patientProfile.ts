@@ -33,3 +33,5 @@ const patientProfileSchema = new mongoose.Schema({
         trim: true,
     }
 })
+
+export default mongoose.model("PatientProfile", patientProfileSchema);

@@ -27,12 +27,11 @@ const doctorProfileSchema = new Schema({
     type: String,
     required: false,
   },
-//   schedules: [
-//     {
-//       type: Schema.Types.ObjectId,
-//       ref: "ClinicSchedule", 
-//     }
-//   ]
+  city:{
+    type: String,
+    required: false,
+    trim: true,
+  }
 }, { timestamps: true });
 
 const doctorProfile = mongoose.model("doctorProfile", doctorProfileSchema);

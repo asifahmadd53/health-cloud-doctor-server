@@ -12,8 +12,8 @@ import adddrugModeRoutes from './routes/drugModeRoutes'
 import drugTypesRoutes from './routes/drugTypeRoutes'
 import drugRoutes from './routes/drugRoutes'
 import helmet from "helmet";
-import sendOTP from './routes/patientRoutes'
-
+import patientAuthRoutes from "./routes/patientAuthRoutes";
+import patientRoutes from "./routes/patientRoutes";
 
 const app =  express()
 
@@ -33,12 +33,14 @@ app.use('/api/doctors', doctorsRoutes)
 app.use('/api/drugmode', adddrugModeRoutes)
 app.use('/api/drugtype', drugTypesRoutes)
 app.use('/api/drugs', drugRoutes)
-app.use("/api/patinet", sendOTP);
+app.use("/api/auth", patientAuthRoutes)
+app.use('/api/patients', patientRoutes)
 
 
 app.get("/", (req, res) => {
     res.send("Hello Worlddddddddd")
 })
+
 
 connectDB().then(()=>{
     app.listen(process.env.PORT, () => {

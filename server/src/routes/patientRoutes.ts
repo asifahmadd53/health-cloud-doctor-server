@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { pateintSignUp, verifyOtp } from "../controllers/patientAuthController";
+import { getDoctorsByPatient } from "../controllers/patientController";
+
 
 const router = Router();
 
-router.post("/patient-signup", pateintSignUp);
-router.post("/verify-otp", verifyOtp);
+router.get("/get-doctors-by-patient", getDoctorsByPatient);
 
 export default router;

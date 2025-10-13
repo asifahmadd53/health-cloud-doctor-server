@@ -19,9 +19,10 @@ export const updateDoctorProfile = [
         certifications,
         professionalBio,
         clinicAddress,
+        city,
       } = req.body;
       const file = req.file;
-
+      
       const updatedAuth = await doctorAuth.findByIdAndUpdate(
         doctorId,
         { name, email, phoneNumber },
@@ -39,6 +40,7 @@ export const updateDoctorProfile = [
         certifications,
         professionalBio,
         clinicAddress,
+        city,
       };
 
       if (file?.buffer) {
