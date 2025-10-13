@@ -6,11 +6,11 @@ const doctorProfileSchema = new Schema({
     ref: "DoctorAuth",
     required: true
   },
-  specialty: {
+  specialty: [{
     type: String,
     required: false,
     trim: true,
-  },
+  }],
   years: {
     type: String,
     required: false,

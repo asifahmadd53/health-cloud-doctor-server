@@ -22,11 +22,11 @@ export const updateDoctorProfile = [
         city,
       } = req.body;
       const file = req.file;
-      
+
       const updatedAuth = await doctorAuth.findByIdAndUpdate(
         doctorId,
-        { name, email, phoneNumber },
-        { new: true }
+        { name, email: email.trim().toLowerCase(), phoneNumber },
+        { new: true, runValidators: true }
       );
 
       if (!updatedAuth)
@@ -35,7 +35,9 @@ export const updateDoctorProfile = [
           .json({ success: false, message: "Doctor not found" });
 
       let profileData: any = {
-        specialty,
+        specialty: Array.isArray(specialty)
+          ? specialty
+          : specialty?.split(",").map((s: string) => s.trim()) || [],
         years,
         certifications,
         professionalBio,
