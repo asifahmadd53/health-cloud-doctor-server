@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getApprovedDoctors, getDoctor, getDoctors, getPendingDoctors, updateDoctorStatus } from "../controllers/doctorsControllers";
-import { createSchedule, getSchedule, updateDoctorProfile } from "../controllers/profileController";
+import { createSchedule, getSchedule, updateDoctorProfile } from "../controllers/doctorProfileController";
 import { logout } from "../controllers/doctorAuthControllers";
 import { authenticate } from "../middleware/authenticate";
 
