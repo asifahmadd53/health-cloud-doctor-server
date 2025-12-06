@@ -15,6 +15,10 @@ const doctorProfileSchema = new Schema({
     type: String,
     required: false,
   },
+  consultationFee:{
+    type: String,
+    required: false,
+  },
   certifications: {
     type: String,
     required: false,

@@ -1,39 +1,34 @@
-import twilio from "twilio";
-import dotenv from "dotenv";
+import client from "../config/twilio";
 
-dotenv.config();
+export const sendOtpService = async (to: string, otp: string) => {
+  let sent = false;
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const client = twilio(accountSid, authToken);
-
-const phone = "+923076916343";
-const messageBody = "Your OTP code is 123456";
-
-async function sendMessage() {
   try {
-    const whatsappMessage = await client.messages.create({
-      body: messageBody,
+    await client.messages.create({
       from: process.env.TWILIO_WHATSAPP_NUMBER,
-      to: `whatsapp:${phone}`,
+      to: `whatsapp:${to}`,
+      body: `Your OTP is ${otp}. Valid for 2 min. Don't share it.`,
     });
+    sent = true;
+    return { sent, method: "WhatsApp" };
+  } catch (wErr: any) {
+    console.warn("WhatsApp failed:", wErr.code || wErr.message);
+  }
 
-    console.log("Sent via WhatsApp! SID:", whatsappMessage.sid);
-  } catch (error) {
-    console.warn("WhatsApp failed, sending SMS instead...");
-
+  if (!sent) {
     try {
-      const smsMessage = await client.messages.create({
-        body: messageBody,
-        from: process.env.TWILIO_SMS_NUMBER, 
-        to: phone,
+      await client.messages.create({
+        from: process.env.TWILIO_SMS_NUMBER,
+        to,
+        body: `Your OTP is ${otp}. Valid for 2 min. Don't share it.`,
       });
-
-      console.log("Sent via SMS! SID:", smsMessage.sid);
-    } catch (smsError:any) {
-      console.error("Both WhatsApp and SMS failed:", smsError.message);
+      sent = true;
+      return { sent, method: "SMS" };
+    } catch (sErr: any) {
+      console.error("SMS send failed:", sErr.message);
+      return { sent: false, method: "none" };
     }
   }
-}
 
-sendMessage();
+  return { sent: false, method: "none" };
+};

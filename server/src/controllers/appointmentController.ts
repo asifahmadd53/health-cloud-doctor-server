@@ -2,7 +2,6 @@
 import Appointment from "../models/appointment";
 import doctorProfile from "../models/doctorProfile";
 import Staff from "../models/staff";
-import { Types } from 'mongoose';
 // export const createAppointment = async (req: any, res: any) => {
 //   try {
 //     const {

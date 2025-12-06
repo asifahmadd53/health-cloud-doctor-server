@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { patientAuth, verifyOtp } from "../controllers/patientAuthController";
+import { verifyOtp, patientAuth } from "../controllers/patientAuthController";
 
 const router = Router();
 

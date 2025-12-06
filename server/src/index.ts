@@ -14,6 +14,7 @@ import drugRoutes from './routes/drugRoutes'
 import helmet from "helmet";
 import patientAuthRoutes from "./routes/patientAuthRoutes";
 import patientRoutes from "./routes/patientRoutes";
+import prescriptionRoutes from "./routes/prescriptionRoutes";
 
 const app =  express()
 
@@ -35,6 +36,7 @@ app.use('/api/drugtype', drugTypesRoutes)
 app.use('/api/drugs', drugRoutes)
 app.use("/api/auth", patientAuthRoutes)
 app.use('/api/patients', patientRoutes)
+app.use('/api/prescriptions', prescriptionRoutes)
 
 
 app.get("/", (req, res) => {
