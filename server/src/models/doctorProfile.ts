@@ -13,11 +13,11 @@ const doctorProfileSchema = new Schema({
   }],
   years: {
     type: String,
-    required: false,
+    required: true,
   },
   consultationFee:{
     type: String,
-    required: false,
+    required: true,
   },
   certifications: {
     type: String,

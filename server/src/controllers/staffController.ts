@@ -1,6 +1,5 @@
 import { JsonWebTokenError } from "jsonwebtoken";
 import upload from "../config/multer-config";
-import { addStaffSchema, staffLoginSchema } from "../middleware/validator";
 import staff from "../models/staff";
 import { doCompare, doHash } from "../utils/hashing";
 import jwt from "jsonwebtoken";
@@ -13,10 +12,10 @@ export const addStaff = [upload.single("profileImage"), async (req: any, res: an
         }
         const { name, role, email, password, phone, address, bio } = req.body;
   
-        const { error } = addStaffSchema.validate(req.body);
-        if (error) {
-          return res.status(400).json({ message: error.details[0].message });
-        }
+        // const { error } = addStaffSchema.validate(req.body);
+        // if (error) {
+        //   return res.status(400).json({ message: error.details[0].message });
+        // }
         const existingUser = await staff.findOne({ $or: [{ email }] });
         if (existingUser) {
           return res.status(400).json({ message: "Staff already exists" });
@@ -53,10 +52,10 @@ export const addStaff = [upload.single("profileImage"), async (req: any, res: an
 export const staffLogin = async (req: any, res: any) => {
     try {
         const { email, password } = req.body;
-        const { error } = staffLoginSchema.validate(req.body);
-        if (error) {
-            return res.status(400).json({ message: error.details[0].message });
-        }
+        // const { error } = staffLoginSchema.validate(req.body);
+        // if (error) {
+        //     return res.status(400).json({ message: error.details[0].message });
+        // }
         const existingStaff = await staff.findOne({ email });
         if (!existingStaff) {
             return res.status(400).json({ message: "Staff not found" });

@@ -2,55 +2,51 @@ import { Request, Response } from "express";
 import imagekit from "../services/imageKitServices";
 import patientDocuments from "../models/patientDocuments";
 
-
 export const uploadPatientDocument = async (req: any, res: any) => {
   try {
-    const patientId = req.user.id;
+    const patientId = (req as any).user.id;
 
     if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "No file uploaded",
-      });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "No file uploaded or invalid file type",
+        });
     }
 
-    const base64File = req.file.buffer.toString("base64");
+    const base64 = req.file.buffer.toString("base64");
 
     const uploadResult = await imagekit.upload({
-      file: base64File,
-      fileName: `patient-doc-${Date.now()}`,
+      file: base64,
+      fileName: `doc-${Date.now()}`,
+      folder: `/patients/${patientId}`,
     });
 
-    let patientDocs = await patientDocuments.findOne({ patient: patientId });
-
-    const newDocument = {
-      documentType: req.body.documentType || "Unknown",
+    const newDoc = {
+      documentType: req.body.documentType || "UNKNOWN",
       documentUrl: uploadResult.url,
     };
 
+    let patientDocs = await patientDocuments.findOne({ patient: patientId });
+
     if (patientDocs) {
-      // Add new document to existing documents array
-      patientDocs.documents.push(newDocument);
+      patientDocs.documents.push(newDoc);
       await patientDocs.save();
     } else {
-      // Create new document entry
       patientDocs = await patientDocuments.create({
         patient: patientId,
-        documents: [newDocument],
+        documents: [newDoc],
       });
     }
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
-      message: "Document uploaded successfully",
-      data: patientDocs,
+      message: "Document uploaded",
+      data: newDoc,
     });
   } catch (error: any) {
     console.error("Upload error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong",
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -236,7 +236,7 @@
 import doctorAuth from "../models/doctors";
 import { doCompare, doHash } from "../utils/hashing";
 import jwt from "jsonwebtoken";
-import { loginSchema, doctorProfileSchema, emailSchema, verificationSchema, resetPasswordSchema } from "../middleware/validator";
+
 import transport from "../middleware/sendMail";
 import upload from "../config/multer-config";
 import dotenv from "dotenv";
@@ -255,10 +255,10 @@ export const signUp = [
     try {
       const { name, pmdcNumber, email, phoneNumber, password } = req.body;
 
-      const { error } = doctorProfileSchema.validate(req.body);
-      if (error) {
-        return res.status(422).json({ message: error.details[0].message });
-      }
+      // const { error } = doctorProfileSchema.validate(req.body);
+      // if (error) {
+      //   return res.status(422).json({ message: error.details[0].message });
+      // }
 
       const existingUser = await doctorAuth.findOne({ $or: [{ pmdcNumber }, { email }] });
       if (existingUser) {
@@ -358,10 +358,10 @@ export const signUp = [
 export const login = async (req: any, res: any) => {
   try {
     const { pmdcNumber, password } = req.body;
-    const { error } = loginSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
-    }
+    // const { error } = loginSchema.validate(req.body);
+    // if (error) {
+    //   return res.status(400).json({ message: error.details[0].message });
+    // }
 
     const user = await doctorAuth.findOne({ pmdcNumber });
     if (!user) {
@@ -400,10 +400,10 @@ export const sendVerificationEmail = async (req: any, res: any) => {
   try {
     const { email } = req.body;
 
-    const { error } = emailSchema.validate({ email });
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
-    }
+    // const { error } = emailSchema.validate({ email });
+    // if (error) {
+    //   return res.status(400).json({ message: error.details[0].message });
+    // }
 
     // Find user by email
     const user = await doctorAuth.findOne({ email });
@@ -490,10 +490,10 @@ export const verifyEmail = async (req: any, res: any) => {
     const { email, verificationCode } = req.body;
 
     // Validate request
-    const { error } = verificationSchema.validate({ email, verificationCode });
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
-    }
+    // const { error } = verificationSchema.validate({ email, verificationCode });
+    // if (error) {
+    //   return res.status(400).json({ message: error.details[0].message });
+    // }
 
     // Find user by email
     const user = await doctorAuth.findOne({
@@ -542,10 +542,10 @@ export const resetPassword = async (req: any, res: any) => {
     const token = authHeader.split(' ')[1];
 
     // Validate password
-    const { error } = resetPasswordSchema.validate({ newPassword });
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
-    }
+    // const { error } = resetPasswordSchema.validate({ newPassword });
+    // if (error) {
+    //   return res.status(400).json({ message: error.details[0].message });
+    // }
 
     try {
       // Verify token

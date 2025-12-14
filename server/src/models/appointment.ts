@@ -9,7 +9,7 @@ const appointmentSchema = new mongoose.Schema({
   },
   doctor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "doctorAuth",
+    ref: "doctorProfile",
     required: true,
   },
   patientId: {
@@ -20,11 +20,11 @@ const appointmentSchema = new mongoose.Schema({
   },
   patientName: {
     type: String,
-    required: true,
+    required: false,
   },
   patientCNIC: {
     type: String,
-    required: true,
+    required: false,
   },
   patientPhone: {
     type: String,
@@ -32,11 +32,32 @@ const appointmentSchema = new mongoose.Schema({
   },
   patientAge: {
     type: Number,
-    required: true,
+    required: false,
   },
   gender: {
     type: String,
-    required: true,
+    required: false,
+  },
+  day: {
+    type: String,
+    enum: [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ],
+    required: false,
+  },
+  slotTime: {
+    type: String,
+    required: false,
+  },
+  clinicScheduleSlotId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
   },
   date: {
     type: Date,

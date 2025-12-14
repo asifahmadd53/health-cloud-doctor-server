@@ -12,25 +12,25 @@ const formatTimeToAMPM = (time24: string): string => {
 export const generateTimeSlots = (daySchedule: any) => {
   if (!daySchedule.isWorking) return [];
 
-  const slots: Array<{
+  const slots: {
     slotTime: string;
     isBooked: boolean;
     appointmentId: null;
-  }> = [];
+  }[] = [];
 
-  const startTime = daySchedule.startTime || "09:00";
-  const endTime = daySchedule.endTime || "17:00";
+  const startTime = daySchedule.startTime ?? "09:00";
+  const endTime = daySchedule.endTime ?? "17:00";
 
   const [startHour, startMinute] = startTime.split(":").map(Number);
   const [endHour, endMinute] = endTime.split(":").map(Number);
 
-  const patientsPerHour = Number(daySchedule.patientPerHour) || 1;
-  const slotDurationMinutes = 60 / patientsPerHour;
+  const patientsPerHour = Math.max(1, Number(daySchedule.patientPerHour) || 1);
+  const slotDurationMinutes = Math.floor(60 / patientsPerHour); // ✅ FIX
 
-  let breakStartHour = 0,
-    breakStartMinute = 0,
-    breakEndHour = 0,
-    breakEndMinute = 0;
+  let breakStartHour = -1,
+    breakStartMinute = -1,
+    breakEndHour = -1,
+    breakEndMinute = -1;
 
   if (daySchedule.hasBreak && daySchedule.breakStart && daySchedule.breakEnd) {
     [breakStartHour, breakStartMinute] = daySchedule.breakStart
@@ -46,29 +46,36 @@ export const generateTimeSlots = (daySchedule: any) => {
 
   while (
     currentHour < endHour ||
-    (currentHour === endHour && currentMinute < endMinute)
+    (currentHour === endHour &&
+      currentMinute + slotDurationMinutes <= endMinute)
   ) {
-    const slotStart = `${currentHour.toString().padStart(2, "0")}:${Math.round(currentMinute).toString().padStart(2, "0")}`;
+    const slotStartHour = currentHour;
+    const slotStartMinute = currentMinute;
 
-    let slotEndMinute = Math.round(currentMinute + slotDurationMinutes);
-    let slotEndHour = currentHour;
+    let slotEndMinute = slotStartMinute + slotDurationMinutes;
+    let slotEndHour = slotStartHour;
 
     if (slotEndMinute >= 60) {
       slotEndHour += Math.floor(slotEndMinute / 60);
-      slotEndMinute = slotEndMinute % 60;
+      slotEndMinute %= 60;
     }
 
-    const slotEnd = `${slotEndHour.toString().padStart(2, "0")}:${slotEndMinute.toString().padStart(2, "0")}`;
-
-    const isBreakTime =
+    // ⛔ Skip slot if it overlaps break
+    const overlapsBreak =
       daySchedule.hasBreak &&
-      (currentHour > breakStartHour ||
-        (currentHour === breakStartHour &&
-          currentMinute >= breakStartMinute)) &&
-      (currentHour < breakEndHour ||
-        (currentHour === breakEndHour && currentMinute < breakEndMinute));
+      slotStartHour * 60 + slotStartMinute <
+        breakEndHour * 60 + breakEndMinute &&
+      slotEndHour * 60 + slotEndMinute > breakStartHour * 60 + breakStartMinute;
 
-    if (!isBreakTime) {
+    if (!overlapsBreak) {
+      const slotStart = `${slotStartHour.toString().padStart(2, "0")}:${slotStartMinute
+        .toString()
+        .padStart(2, "0")}`;
+
+      const slotEnd = `${slotEndHour.toString().padStart(2, "0")}:${slotEndMinute
+        .toString()
+        .padStart(2, "0")}`;
+
       slots.push({
         slotTime: `${formatTimeToAMPM(slotStart)} - ${formatTimeToAMPM(slotEnd)}`,
         isBooked: false,
@@ -79,7 +86,7 @@ export const generateTimeSlots = (daySchedule: any) => {
     currentMinute += slotDurationMinutes;
     if (currentMinute >= 60) {
       currentHour += Math.floor(currentMinute / 60);
-      currentMinute = currentMinute % 60;
+      currentMinute %= 60;
     }
   }
 

@@ -82,7 +82,6 @@ export const getPendingDoctors = async (req: any, res: any) => {
   }
 };
 
-
 export const getApprovedDoctors = async (req: any, res: any) => {
   try {
     const approvedDoctors = await doctorAuth.find({ isApproved: true });

@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { getApprovedDoctors, getDoctor, getDoctors, getPendingDoctors, updateDoctorStatus } from "../controllers/doctorsControllers";
-import { createSchedule, getSchedule, updateDoctorProfile } from "../controllers/doctorProfileController";
+import { createSchedule, getDoctorAvailableSlots, getSchedule, updateDoctorProfile } from "../controllers/doctorProfileController";
 import { logout } from "../controllers/doctorAuthControllers";
 import { authenticate } from "../middleware/authenticate";
+import { Auth } from "firebase-admin/auth";
 
 
 const router = Router()
@@ -16,6 +17,7 @@ router.patch('/update-doctor',authenticate,updateDoctorProfile)
 router.patch('/update-doctor-status/:id',updateDoctorStatus)
 router.post('/create-schedule',authenticate,createSchedule)
 router.get('/get-schedule',authenticate,getSchedule)
+router.get("/get-available-slots",authenticate, getDoctorAvailableSlots);
 router.post('/logout',logout)
 
 

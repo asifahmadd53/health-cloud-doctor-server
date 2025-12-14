@@ -57,6 +57,8 @@ import Staff from "../models/staff";
 // };
 
 
+
+
 export const createAppointment = async (req: any, res: any) => {
   try {
     const {
@@ -66,7 +68,8 @@ export const createAppointment = async (req: any, res: any) => {
       patientAge,
       gender,
       date,
-      time,
+      slotTime,
+      clinicScheduleSlotId,
       paymentStatus,
       reason,
     } = req.body;
@@ -80,16 +83,30 @@ export const createAppointment = async (req: any, res: any) => {
     if (req.user?.staffId) {
       const staff = await Staff.findById(req.user.staffId);
       if (!staff) return res.status(404).json({ message: 'Staff not found' });
-      doctorRefId = staff.doctor.toString();
+     const profile = await doctorProfile.findOne({ doctor: staff.doctor });
+     if (!profile) {
+       return res.status(404).json({ message: "Doctor profile not found" });
+     }
 
-      if (!date || !time) {
-        return res.status(400).json({ message: 'Date and time required for staff appointment' });
+     doctorRefId = profile._id.toString();
+
+      if (!date || !slotTime || !clinicScheduleSlotId) {
+        return res
+          .status(400)
+          .json({ message: "Date and time required for staff appointment" });
       }
 
       
-      const existing = await Appointment.findOne({ doctor: doctorRefId, date, time });
+      const existing = await Appointment.findOne({
+        doctor: doctorRefId,
+        date,
+        clinicScheduleSlotId,
+      });
+
       if (existing) {
-        return res.status(400).json({ message: 'Doctor already has an appointment at this time' });
+        return res.status(400).json({
+          message: "This slot is already booked",
+        });
       }
     } else if (req.user?.id) {
       const profile = await doctorProfile.findOne({ doctor: req.user?.id }); // same as createSchedule
@@ -103,17 +120,19 @@ export const createAppointment = async (req: any, res: any) => {
 
     const appointment = await Appointment.create({
       staffId: req.user?.staffId || null,
-      doctor: doctorRefId, 
+      doctor: doctorRefId,
       patientName,
       patientCNIC,
       patientPhone,
       patientAge,
       gender,
-      date: req.user?.staffId ? date : null,
-      time: req.user?.staffId ? time : null,
+      date,
+      time: slotTime,
+      clinicScheduleSlotId,
       paymentStatus,
       reason,
     });
+
 
     res.status(201).json({
       success: true,
@@ -126,44 +145,79 @@ export const createAppointment = async (req: any, res: any) => {
   }
 };
 
-export const getAppointments = async(req:any, res:any)=>{
-  try{
+export const getAppointments = async (req: any, res: any) => {
+  try {
     const staffId = req.user?.staffId;
     const staff = await Staff.findById(staffId).lean();
-     if (!staff) return res.status(404).json({ message: "Staff not found" });
-    const appointments = await Appointment.find({doctor: staff.doctor}).populate('staffId','name email').sort({createdAt:-1}).lean();
-    if(appointments.length === 0){
-      return res.status(404).json({message:"No appointments found"})
-    }
-    res.status(200).json({
-      success: true,
-      message: "Appointments fetched successfully",
-      appointments,
-    })
-  }catch(err:any){
-    return res.status(500).json({message:"Internal server error", error:err.message})
-  }
-}
+    if (!staff) return res.status(404).json({ message: "Staff not found" });
 
-export const getDoctorAppointments = async (req: any, res: any) => {
-  try {
-    const doctorId = req.user?.id;
-    if (!doctorId) {
-      return res.status(401).json({ message: "Unauthorized: Doctor not found in token" });
+    const staffDoctorProfile = await doctorProfile.findOne({
+      doctor: staff.doctor,
+    }).lean();
+    if (!staffDoctorProfile) {
+      return res.status(404).json({ message: "Doctor profile not found" });
     }
-    const appointments = await Appointment.find({ doctor: doctorId }).populate('staffId', 'name email').sort({ createdAt: -1 }).lean();
-    if (appointments.length === 0) {
-      return res.status(404).json({ message: "No appointments found" });
-    } 
+
+    const appointments = await Appointment.find({
+      doctor: staffDoctorProfile._id,
+    })
+      .populate("staffId", "name email")
+      .populate("patientId", "patientNumber")
+      .sort({ createdAt: -1 })
+      .lean();
+
     res.status(200).json({
       success: true,
-      message: "Appointments fetched successfully",
+      message:
+        appointments.length > 0
+          ? "Appointments fetched successfully"
+          : "No appointments found",
       appointments,
     });
   } catch (err: any) {
-    return res.status(500).json({ message: "Internal server error", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
-}
+};
+
+export const getDoctorAppointments = async (req: any, res: any) => {
+  try {
+    const doctorAuthId = req.user?.id;
+    if (!doctorAuthId) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: Doctor not found in token" });
+    }
+
+    const profile = await doctorProfile.findOne({
+      doctor: doctorAuthId,
+    }).lean();
+    if (!profile) {
+      return res.status(404).json({ message: "Doctor profile not found" });
+    }
+
+    const appointments = await Appointment.find({ doctor: profile._id })
+      .populate("staffId", "name email")
+      .populate("patientId", "patientNumber")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      message:
+        appointments.length > 0
+          ? "Appointments fetched successfully"
+          : "No appointments found",
+      appointments,
+    });
+  } catch (err: any) {
+    console.error("Error fetching doctor appointments:", err);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
+  }
+};
 
 export const getDoctorAppointmentById = async (req: any, res: any) => {
   try {

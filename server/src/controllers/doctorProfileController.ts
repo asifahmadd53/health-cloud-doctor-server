@@ -1,8 +1,10 @@
 import upload from "../config/multer-config";
 import { generateTimeSlots } from "../helpers/slotGeneration";
+import Appointment from "../models/appointment";
 import ClinicSchedule from "../models/ClinicSchedule";
 import doctorProfile from "../models/doctorProfile";
 import doctorAuth from "../models/doctors";
+import Staff from "../models/staff";
 
 export const updateDoctorProfile = [
   upload.single("profileImage"),
@@ -69,8 +71,6 @@ export const updateDoctorProfile = [
     }
   },
 ];
-
-
 
 export const createSchedule = async (req: any, res: any) => {
   try {
@@ -348,3 +348,113 @@ export const getSchedule = async (req: any, res: any) => {
     });
   }
 };
+
+
+export const getDoctorAvailableSlots = async (req: any, res: any) => {
+  try {
+    const { date, doctorId } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ message: "Date is required" });
+    }
+
+    let doctorProfileId: string;
+
+    // =========================
+    // PATIENT FLOW (FIX)
+    // =========================
+    if (doctorId) {
+      const profile = await doctorProfile.findOne({ doctor: doctorId });
+      if (!profile) {
+        return res.status(404).json({ message: "Doctor profile not found" });
+      }
+      doctorProfileId = profile._id.toString();
+    }
+
+    // =========================
+    // STAFF FLOW
+    // =========================
+    else if (req.user?.staffId) {
+      const staff = await Staff.findById(req.user.staffId);
+      if (!staff) return res.status(404).json({ message: "Staff not found" });
+
+      const profile = await doctorProfile.findOne({ doctor: staff.doctor });
+      if (!profile)
+        return res.status(404).json({ message: "Doctor profile not found" });
+
+      doctorProfileId = profile._id.toString();
+    }
+
+    // =========================
+    // DOCTOR FLOW
+    // =========================
+    else if (req.user?.id) {
+      const profile = await doctorProfile.findOne({ doctor: req.user.id });
+      if (!profile)
+        return res.status(404).json({ message: "Doctor profile not found" });
+
+      doctorProfileId = profile._id.toString();
+    } else {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // =========================
+    // FETCH SCHEDULE
+    // =========================
+    const schedule = await ClinicSchedule.findOne({ doctor: doctorProfileId });
+    if (!schedule) {
+      return res.status(404).json({ message: "Schedule not found" });
+    }
+
+    const dayName = new Date(date).toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+
+    const daySchedule = schedule.weeklySchedule.find(
+      (d: any) => d.day === dayName && d.isWorking
+    );
+
+    if (!daySchedule) {
+      return res.status(200).json({
+        success: true,
+        slots: [],
+        message: "Doctor not available on this day",
+      });
+    }
+
+    // =========================
+    // FILTER BOOKED SLOTS
+    // =========================
+    const appointments = await Appointment.find({
+      doctor: doctorProfileId,
+      date,
+    }).select("clinicScheduleSlotId");
+
+    const bookedSlotIds = appointments
+      .map((a) => a.clinicScheduleSlotId?.toString())
+      .filter(Boolean);
+
+    const availableSlots = daySchedule.availableSlots
+      .filter((slot) => !bookedSlotIds.includes(slot._id.toString()))
+      .map((slot) => ({
+        _id: slot._id,
+        slotTime: slot.slotTime,
+      }));
+
+    return res.status(200).json({
+      success: true,
+      day: dayName,
+      totalSlots: availableSlots.length,
+      slots: availableSlots,
+    });
+  } catch (error: any) {
+    console.error("Slot fetch error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+
+
