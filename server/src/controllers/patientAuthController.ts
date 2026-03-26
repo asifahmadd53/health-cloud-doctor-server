@@ -116,7 +116,9 @@ export const patientAuth = async (req: any, res: any) => {
     
 
     const otp = generateOtp();
-    const to = `+${patientNumber}`;
+    const to = patientNumber.startsWith("+")
+      ? patientNumber
+      : `+${patientNumber}`;
     const result = await sendOtpService(to, otp);
 
     if (!result.sent) {
